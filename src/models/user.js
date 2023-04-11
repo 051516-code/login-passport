@@ -10,7 +10,7 @@ const userSchema  = new Schema({
 
 
 //TODO:  cifrado de contrasena
-userSchema.methods.encyptPassword = () => {
+userSchema.methods.encyptPassword = (password) => {
    return bcrypt.hashSync(password, bcrypt.genSaltSync(10))
 }
 

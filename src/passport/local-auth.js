@@ -1,24 +1,47 @@
-const passport = require("passport");
-const LocalStrategy = require("passport-local").Strategy;
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
-const User = require('../models/user') //TODO : imortamos el modelo de usuario para manejar el
+const User = require('../models/user');
 
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
 
-
-
-
-
-//TODO: utilizamos passport para auntenticar el usuario 
+passport.deserializeUser(async (id, done) => {
+  const user = await User.findById(id);
+  done(null, user);
+});
 
 passport.use('local-signup', new LocalStrategy({
-    usernameField:'email',
-    passwordField: 'password',   // } TODO : aqui defino los datos a validar
-    passReqToCallback: true
-}, async (req, email, password, done) =>{
-   const user =  new User();
-   user.email = email;
-   user.password = password;     //TODO : este bloque autentica el usuario y lo conecta con el modelo de base de datos
-   await user.save();
+  usernameField: 'email',
+  passwordField: 'password',
+  passReqToCallback: true
+}, async (req, email, password, done) => {
+  const user = await User.findOne({'email': email})
+  console.log(user)
+  if(user) {
+    return done(null, false, req.flash('signupMessage', 'The Email is already Taken.'));
+  } else {
+    const newUser = new User();
+    newUser.email = email;
+    newUser.password = newUser.encyptPassword(password);
+  console.log(newUser)
+    await newUser.save();
+    done(null, newUser);
+  }
+}));
 
-   done(null, user)
-}))
+passport.use('local-signin', new LocalStrategy({
+  usernameField: 'email',
+  passwordField: 'password',
+  passReqToCallback: true
+}, async (req, email, password, done) => {
+  const user = await User.findOne({email: email});
+  if(!user) {
+    return done(null, false, req.flash('signinMessage', 'No User Found'));
+  }
+  if(!user.comparePassword(password)) {
+    return done(null, false, req.flash('signinMessage', 'Incorrect Password'));
+  }
+  return done(null, user);
+}));

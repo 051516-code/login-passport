@@ -1,33 +1,49 @@
-const { Router } =  require('express')
-const router = Router();
-
+const router = require('express').Router();
+const passport = require('passport');
 
 router.get('/', (req, res, next) => {
-    res.render('index');
+  res.render('index');
+});
+
+router.get('/signup', (req, res, next) => {
+  res.render('signup');
+});
+
+router.post('/signup', passport.authenticate('local-signup', {
+  successRedirect: '/profile',
+  failureRedirect: '/signup',
+  failureFlash: true
+})); 
+
+router.get('/signin', (req, res, next) => {
+  res.render('signin');
 });
 
 
-//Login form
-router.get('/signup', (req, res, nex) => {
-    res.render('signup')
+router.post('/signin', passport.authenticate('local-signin', {
+  successRedirect: '/profile',
+  failureRedirect: '/signin',
+  failureFlash: true
+}));
+
+router.get('/profile',isAuthenticated, (req, res, next) => {
+  res.render('profile');
 });
 
-//Login send form
-router.post('/signup', (req, res, nex) => {
-    console.log(req.body)
-    res.send('registrando...')
+router.get('/logout', (req, res, next) => {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/');
+  });
 });
 
 
-//Register form
-router.get('/signin', (req, res, nex) => {
+function isAuthenticated(req, res, next) {
+  if(req.isAuthenticated()) {
+    return next();
+  }
 
-})
-
-//Register  send form
-router.post('/signin', (req, res, nex) => {
-
-})
-
+  res.redirect('/')
+}
 
 module.exports = router;
